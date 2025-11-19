@@ -1,0 +1,171 @@
+# StillHere .gitignore
+# Protecting privacy and keeping the repository clean
+
+# ============================================================================
+# CRITICAL: Never commit photos, videos, or encrypted memories
+# ============================================================================
+data/
+*.enc
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# ============================================================================
+# Python
+# ============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# ============================================================================
+# AI Models (these are large and should be downloaded separately)
+# ============================================================================
+stillhere/models/fomm/*.pth
+stillhere/models/fomm/*.pt
+stillhere/models/gfpgan/*.pth
+stillhere/models/gfpgan/*.pt
+stillhere/models/wav2lip/*.pth
+stillhere/models/wav2lip/*.pt
+*.ckpt
+*.safetensors
+checkpoints/
+
+# ============================================================================
+# Secrets and sensitive configuration
+# ============================================================================
+.env
+.env.local
+.env.*.local
+secrets/
+*.key
+*.pem
+*.p12
+config/secrets.yml
+config/local.yml
+
+# ============================================================================
+# Logs and temporary files
+# ============================================================================
+logs/
+*.log
+tmp/
+temp/
+.tmp/
+
+# ============================================================================
+# Output and generated files
+# ============================================================================
+output/
+exports/
+generated/
+cache/
+
+# ============================================================================
+# OS specific
+# ============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+
+# ============================================================================
+# Project specific
+# ============================================================================
+# Test data (can be removed if you want to commit test data)
+test_data/
+sample_photos/
+
+# User-specific configuration
+config/user_settings.yml

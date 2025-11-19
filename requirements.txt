@@ -1,0 +1,63 @@
+# StillHere - Requirements
+# Core dependencies for photo animation and memory preservation
+
+# Core Python packages
+numpy>=1.21.0
+Pillow>=9.0.0
+opencv-python>=4.5.0
+
+# Encryption and security
+cryptography>=41.0.0
+
+# Deep Learning frameworks
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Image and video processing
+imageio>=2.9.0
+imageio-ffmpeg>=0.4.0
+scikit-image>=0.19.0
+
+# Face restoration (GFPGAN)
+# These will be added in Phase 2
+# gfpgan
+# facexlib
+# realesrgan
+
+# Photo animation (FOMM)
+# These will be added in Phase 1
+# face-alignment
+# scikit-learn
+# scipy
+
+# Lip sync (Wav2Lip) - Phase 3
+# librosa
+# soundfile
+
+# Voice synthesis (optional) - Phase 3
+# TTS
+# pydub
+
+# Web UI (Phase 2)
+# flask>=2.3.0
+# flask-cors>=4.0.0
+
+# CLI improvements
+click>=8.0.0
+rich>=13.0.0
+tqdm>=4.65.0
+
+# Configuration and utilities
+pyyaml>=6.0
+python-dotenv>=1.0.0
+requests>=2.28.0
+
+# Development dependencies (optional)
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+# black>=23.0.0
+# flake8>=6.0.0
+# mypy>=1.0.0
+
+# Note: Some dependencies (like GFPGAN, FOMM models) will be installed
+# separately as they require specific setup. See Installation section in README.

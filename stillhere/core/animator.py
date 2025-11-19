@@ -11,9 +11,12 @@ Core Principles:
 - Respect the memory: Every frame matters
 """
 
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Union, Dict, Any, List
 from pathlib import Path
 import numpy as np
+
+from stillhere.core.utils import ImageUtils, VideoUtils
+from stillhere.models.fomm_wrapper import FOMMModel, get_default_checkpoint_path, get_default_config_path
 
 
 class AnimationStyle:
@@ -47,12 +50,14 @@ class Animator:
 
     Example:
         >>> animator = Animator()
-        >>> video = animator.animate(
+        >>> frames = animator.animate(
         ...     photo="path/to/photo.jpg",
         ...     style="gentle_smile",
         ...     duration=5,
         ...     quality="high"
         ... )
+        >>> # Save as video
+        >>> animator.save_video(frames, "output.mp4")
     """
 
     def __init__(
@@ -65,26 +70,42 @@ class Animator:
         Initialize the Animator.
 
         Args:
-            model_path: Path to pre-trained models (default: auto-download)
+            model_path: Path to pre-trained models (default: auto-detect)
             device: Device to use ("cuda" or "cpu")
             use_cpu: Force CPU usage even if GPU available
         """
-        self.model_path = model_path
         self.device = "cpu" if use_cpu else device
         self.model = None
         self._initialized = False
+
+        # Auto-detect model paths if not provided
+        if model_path is None:
+            checkpoint_path = get_default_checkpoint_path()
+            config_path = get_default_config_path()
+        else:
+            checkpoint_path = Path(model_path) / "vox-cpk.pth.tar"
+            config_path = Path(model_path) / "vox-256.yaml"
+
+        self.checkpoint_path = checkpoint_path
+        self.config_path = config_path
 
     def _load_model(self):
         """Load the animation model. Lazy loading for faster startup."""
         if self._initialized:
             return
 
-        # TODO: Implement FOMM model loading
-        # This will be implemented when integrating the actual models
-        print("Loading animation models...")
-        print("Models will be downloaded on first use (~5GB)")
+        print("🎬 Initializing animation engine...")
+
+        # Initialize FOMM model
+        self.model = FOMMModel(
+            checkpoint_path=self.checkpoint_path,
+            config_path=self.config_path,
+            device=self.device,
+            use_demo_mode=True  # Will auto-switch if real models available
+        )
 
         self._initialized = True
+        print("✓ Animation engine ready")
 
     def animate(
         self,
@@ -93,8 +114,9 @@ class Animator:
         duration: float = 5.0,
         quality: str = "high",
         fps: int = 30,
-        driving_video: Optional[Union[str, Path]] = None
-    ) -> np.ndarray:
+        driving_video: Optional[Union[str, Path, List[np.ndarray]]] = None,
+        output_path: Optional[Union[str, Path]] = None
+    ) -> List[np.ndarray]:
         """
         Animate a still photo with the specified style.
 
@@ -105,9 +127,10 @@ class Animator:
             quality: Quality level ("low", "medium", "high")
             fps: Frames per second
             driving_video: Optional custom driving video for motion
+            output_path: Optional path to save video directly
 
         Returns:
-            Animated video as numpy array
+            List of animated frames
 
         Raises:
             ValueError: If style is invalid or photo can't be loaded
@@ -121,14 +144,76 @@ class Animator:
                 f"Choose from: {AnimationStyle.get_all_styles()}"
             )
 
-        # TODO: Implement actual animation
-        # This is a placeholder that will be replaced with real FOMM integration
-        print(f"Animating photo with style: {style}")
-        print(f"Duration: {duration}s at {fps} fps")
-        print(f"Quality: {quality}")
+        print(f"\n🎨 Creating animation...")
+        print(f"   Style: {style}")
+        print(f"   Duration: {duration}s at {fps} fps")
+        print(f"   Quality: {quality}")
 
-        # Placeholder return
-        return np.array([])
+        # Load source image
+        if isinstance(photo, (str, Path)):
+            print(f"   Loading photo: {photo}")
+            source_image = ImageUtils.load_image(photo, as_rgb=True)
+        else:
+            source_image = photo
+
+        # Resize based on quality
+        if quality == "high":
+            target_size = (256, 256)
+        elif quality == "medium":
+            target_size = (128, 128)
+        else:
+            target_size = (64, 64)
+
+        source_image = ImageUtils.resize_image(source_image, target_size)
+
+        # Calculate number of frames
+        num_frames = int(duration * fps)
+
+        # Load driving video if provided
+        driving_frames = None
+        if driving_video is not None:
+            if isinstance(driving_video, (str, Path)):
+                print(f"   Loading driving video: {driving_video}")
+                driving_frames = VideoUtils.read_video_frames(driving_video)
+            else:
+                driving_frames = driving_video
+
+        # Animate
+        print(f"   Generating {num_frames} frames...")
+        frames = self.model.animate(
+            source_image=source_image,
+            driving_video=driving_frames,
+            num_frames=num_frames,
+            style=style
+        )
+
+        print(f"✓ Animation complete ({len(frames)} frames)")
+
+        # Save if output path provided
+        if output_path:
+            self.save_video(frames, output_path, fps=fps)
+
+        return frames
+
+    def save_video(
+        self,
+        frames: List[np.ndarray],
+        output_path: Union[str, Path],
+        fps: int = 30,
+        codec: str = 'mp4v'
+    ):
+        """
+        Save animated frames as a video file.
+
+        Args:
+            frames: List of frames
+            output_path: Output video path
+            fps: Frames per second
+            codec: Video codec
+        """
+        print(f"\n💾 Saving video to: {output_path}")
+        VideoUtils.create_video_from_frames(frames, output_path, fps=fps, codec=codec)
+        print(f"✓ Video saved successfully")
 
     def animate_with_voice(
         self,
@@ -137,8 +222,9 @@ class Animator:
         voice_sample: Optional[Union[str, Path]] = None,
         audio_file: Optional[Union[str, Path]] = None,
         quality: str = "high",
-        fps: int = 30
-    ) -> np.ndarray:
+        fps: int = 30,
+        output_path: Optional[Union[str, Path]] = None
+    ) -> List[np.ndarray]:
         """
         Animate a photo to speak using voice synthesis or audio.
 
@@ -149,9 +235,10 @@ class Animator:
             audio_file: Pre-recorded audio to lip-sync to
             quality: Quality level ("low", "medium", "high")
             fps: Frames per second
+            output_path: Optional path to save video
 
         Returns:
-            Animated video with audio
+            List of animated frames
 
         Raises:
             ValueError: If neither text+voice_sample nor audio_file provided
@@ -163,18 +250,32 @@ class Animator:
                 "Must provide either 'audio_file' or both 'text' and 'voice_sample'"
             )
 
-        # TODO: Implement voice synthesis and lip-sync
-        # This will use Wav2Lip and possibly Coqui TTS
-        print("Animating with voice...")
-        if text:
-            print(f"Text: {text}")
-        if voice_sample:
-            print(f"Voice sample: {voice_sample}")
-        if audio_file:
-            print(f"Audio file: {audio_file}")
+        print("\n🎤 Animating with voice...")
+        print("⚠️  Voice synthesis will be available in Phase 3")
+        print("   For now, this creates a basic animation")
 
-        # Placeholder return
-        return np.array([])
+        if text:
+            print(f"   Text: {text}")
+        if voice_sample:
+            print(f"   Voice sample: {voice_sample}")
+        if audio_file:
+            print(f"   Audio file: {audio_file}")
+
+        # For now, create basic animation
+        # Wav2Lip integration will be added in Phase 3
+        frames = self.animate(
+            photo=photo,
+            style=AnimationStyle.SPEAKING,
+            duration=5.0,  # Default duration, will match audio in Phase 3
+            quality=quality,
+            fps=fps
+        )
+
+        if output_path:
+            self.save_video(frames, output_path, fps=fps)
+            # TODO Phase 3: Add audio to video
+
+        return frames
 
     def get_style_info(self, style: str) -> Dict[str, Any]:
         """

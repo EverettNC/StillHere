@@ -10,11 +10,14 @@ A way to honor them. To remember them. To hold onto their presence.
 Built with love for those who deserve to be remembered.
 
 Usage:
-    # Run web interface
+    # Run guided experience (default - for those who are grieving)
     python app.py
 
-    # Run CLI
-    python app.py --cli
+    # Run web interface
+    python app.py --web
+
+    # Run CLI commands
+    python app.py --cli animate photo.jpg
 
     # Show help
     python app.py --help
@@ -87,6 +90,19 @@ def run_cli(args: list):
     cli.run(args)
 
 
+def run_guided():
+    """
+    Run the compassionate guided experience.
+
+    This is the default mode - for those who are grieving,
+    who need gentle guidance through the process.
+    """
+    from stillhere.guide import CompassionateGuide
+
+    guide = CompassionateGuide()
+    guide.run()
+
+
 def main():
     """Main entry point for StillHere."""
     parser = argparse.ArgumentParser(
@@ -94,11 +110,14 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run web interface
+  # Run guided experience (gentle, compassionate, step-by-step)
   python app.py
 
+  # Run web interface
+  python app.py --web
+
   # Run web interface on specific port
-  python app.py --port 8080
+  python app.py --web --port 8080
 
   # Run CLI to animate a photo
   python app.py --cli animate photo.jpg --style gentle_smile
@@ -116,7 +135,13 @@ Built with tears and love. For those who deserve to be remembered.
     parser.add_argument(
         '--cli',
         action='store_true',
-        help='Run in CLI mode instead of web UI'
+        help='Run in CLI mode for direct commands'
+    )
+
+    parser.add_argument(
+        '--web',
+        action='store_true',
+        help='Run web interface'
     )
 
     parser.add_argument(
@@ -157,11 +182,14 @@ Built with tears and love. For those who deserve to be remembered.
     if args.cli:
         # Run in CLI mode
         run_cli(unknown)
-    else:
+    elif args.web:
         # Run in web UI mode
         if unknown:
             print(f"Warning: Unknown arguments will be ignored in web UI mode: {unknown}\n")
         run_web_ui(host=args.host, port=args.port, debug=args.debug)
+    else:
+        # Default: Run guided experience
+        run_guided()
 
 
 if __name__ == '__main__':

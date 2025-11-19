@@ -6,6 +6,10 @@ numpy>=1.21.0
 Pillow>=9.0.0
 opencv-python>=4.5.0
 
+# Quantum emotion modeling (Auntie Protocol)
+qutip>=4.7.0
+matplotlib>=3.5.0
+
 # Encryption and security
 cryptography>=41.0.0
 

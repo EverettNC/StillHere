@@ -13,5 +13,6 @@ __author__ = "Everett Christman"
 from stillhere.core.animator import Animator
 from stillhere.core.restorer import Restorer
 from stillhere.core.keeper import MemoryKeeper
+from stillhere.emotion_protocols import AuntieProtocol, EmotionProtocol
 
-__all__ = ["Animator", "Restorer", "MemoryKeeper"]
+__all__ = ["Animator", "Restorer", "MemoryKeeper", "AuntieProtocol", "EmotionProtocol"]

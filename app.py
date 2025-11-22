@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-StillHere - The Memorial Interface
+StillHere - The Memorial Orchestrator
 Author: Everett N. Christman
 Enhanced by: Nana Banana (Compassionate Agent)
 
@@ -110,8 +110,9 @@ def run_guided():
     type_writer(f"    Thank you. {name}. That is a strong name.")
     gentle_pause(1)
     
-    # --- THE COLLECTION PHASE (The Cathedral approach) ---
+    # --- THE COLLECTION PHASE ---
     assets = []
+    music_choice = None
     collecting = True
     
     type_writer("    I am ready to receive their memories.")
@@ -120,7 +121,7 @@ def run_guided():
     print("")
 
     while collecting:
-        type_writer(f"    Please drag and drop a file here (or press Enter to finish):")
+        type_writer(f"    Please drag and drop a file here (or press Enter to continue):")
         path_input = input("    [File Path]: ").strip().strip("'").strip('"')
         
         if path_input:
@@ -146,9 +147,31 @@ def run_guided():
         type_writer("    I did not receive any files. We can try again later.")
         return
 
+    # --- MUSIC SELECTION PHASE ---
+    print("")
+    type_writer("    Music carries the spirit when words fail.")
+    type_writer("    Do they have a favorite song or artist you would like to include?")
+    type_writer("    (You can drag a music file here, type an artist name, or press Enter to skip)")
+    music_input = input("    [Music]: ").strip().strip("'").strip('"')
+
+    if music_input:
+        # Check if it's a file path
+        if os.path.exists(music_input) and os.path.isfile(music_input):
+             music_choice = {"type": "file", "value": music_input}
+             type_writer(f"    >> Excellent. I will weave '{os.path.basename(music_input)}' into the tribute.")
+        else:
+             music_choice = {"type": "artist", "value": music_input}
+             type_writer(f"    >> {music_input}. A wonderful choice. I will find a fitting melody.")
+    else:
+        type_writer("    >> I will select a gentle, respectful ambient track.")
+
+
     # --- THE ORCHESTRATION PHASE ---
     print("")
     type_writer(f"    I have collected {len(assets)} memories of {name}.")
+    if music_choice:
+        type_writer("    And the music to guide them home.")
+        
     type_writer("    I am now weaving them into a tribute.")
     type_writer("    Applying the 'Cathedral' high-fidelity processing...")
     

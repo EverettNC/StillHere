@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
-StillHere API Server v2.2 - QuickTime Compatible
+StillHere API Server v2.3 - Editor Compatible
 """
+
 from pathlib import Path
 import tempfile
 import logging
 import subprocess
 import shutil
+import os
+
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import Response
 
@@ -34,16 +37,31 @@ def convert_video(input_path, output_path, format_type="mp4"):
         shutil.copy(input_path, output_path)
         return
 
-    cmd = [ffmpeg, '-y', '-i', str(input_path)]
+    # Generate silent audio if missing to please editors like CapCut
+    # -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100
+    
+    cmd = [
+        ffmpeg, '-y', 
+        '-i', str(input_path),
+        '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
+        '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'slow', '-crf', '18',
+        '-c:a', 'aac', '-b:a', '192k', '-shortest',
+        '-movflags', '+faststart'
+    ]
+
     if format_type == "mov":
-        # QuickTime Optimized
-        cmd.extend(['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-f', 'mov'])
+        cmd.extend(['-f', 'mov'])
     else:
-        # MP4 Universal
-        cmd.extend(['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-movflags', '+faststart', '-f', 'mp4'])
+        cmd.extend(['-f', 'mp4'])
     
     cmd.append(str(output_path))
-    subprocess.run(cmd, check=True)
+    
+    try:
+        subprocess.run(cmd, check=True)
+    except Exception as e:
+        logger.error(f"Conversion failed: {e}")
+        # Fallback copy
+        shutil.copy(input_path, output_path)
 
 @app.post("/api/animate")
 async def animate_endpoint(

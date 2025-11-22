@@ -36,14 +36,14 @@ def print_banner():
     \033[96m
     . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
     .                                                         .
-    .    S T I L L   H E R E   M E M O R I A L   S U I T E    .
+    .    S T I L L   H E R E   O R C H E S T R A T O R        .
     .                                                         .
     . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
     \033[0m
     """
     print(banner)
     gentle_pause(0.5)
-    print("\033[90m    [Initializing Memory Core...]\033[0m")
+    print("\033[90m    [Initializing Sanctuary Core...]\033[0m")
     gentle_pause(1.5)
 
 def print_quote():
@@ -94,95 +94,111 @@ def run_guided():
     """
     print_banner()
     
-    type_writer("    Hello. I am the memory keeper for this session.")
+    type_writer("    Hello. I am Nana Banana, the keeper of this sanctuary.")
     gentle_pause(1)
-    type_writer("    I know this process can be heavy, but I am here to help you.")
-    type_writer("    We are going to bring a photo to life, gently and beautifully.")
+    type_writer("    We are going to build something beautiful today.")
+    type_writer("    Not just a file, but a tribute worthy of the life lived.")
     print("")
     
-    type_writer("    What is the name of the person we are honoring today?")
+    type_writer("    What is the name of the person we are honoring?")
     name = input("    >> ")
     
     # Sanitize for filename
     safe_filename = "".join([c for c in name if c.isalpha() or c.isdigit() or c==' ']).strip().replace(' ', '_')
     
     print("")
-    type_writer(f"    Thank you. It is an honor to work on {name}'s memory with you.")
+    type_writer(f"    Thank you. {name}. That is a strong name.")
     gentle_pause(1)
     
-    type_writer("    I can assist you with:")
-    print("    1. [Animate] Make a still photo move and breathe.")
-    print("    2. [Voice]   Reconstruct their voice from audio samples.")
-    print("    3. [Video]   Create a tribute video for a service.")
+    # --- THE COLLECTION PHASE (The Cathedral approach) ---
+    assets = []
+    collecting = True
+    
+    type_writer("    I am ready to receive their memories.")
+    type_writer("    You can give me photos, videos, or voice recordings.")
+    type_writer("    We will weave them together.")
     print("")
-    
-    choice = input("    Which would you like to start with? (1/2/3): ")
-    
-    if choice == '1':
-        type_writer("\n    Excellent choice. Seeing them move again is powerful.")
-        type_writer("    Please drag and drop the photo file into this window...")
-        
+
+    while collecting:
+        type_writer(f"    Please drag and drop a file here (or press Enter to finish):")
         path_input = input("    [File Path]: ").strip().strip("'").strip('"')
         
         if path_input:
-            type_writer(f"\n    I see it. {name} looks wonderful here.")
-            type_writer("    Processing the image... applying the 'Gentle Spirit' animation...")
+            # Identify file type roughly
+            ext = os.path.splitext(path_input)[1].lower()
+            file_type = "Unknown"
+            if ext in ['.jpg', '.jpeg', '.png', '.webp']: file_type = "Photo"
+            elif ext in ['.mp4', '.mov', '.avi']: file_type = "Video"
+            elif ext in ['.mp3', '.wav', '.m4a']: file_type = "Audio"
             
-            # Simulating work
-            gentle_pause(1.5)
-            print("    [>>>.................] 15% - Reading features")
-            gentle_pause(1)
-            print("    [||||||||||..........] 50% - Generating motion")
-            gentle_pause(1)
-            print("    [||||||||||||||||||||] 100% - Rendering video")
-            print("")
+            assets.append({'path': path_input, 'type': file_type})
+            type_writer(f"    Received: {os.path.basename(path_input)} ({file_type})")
             
-            memories_dir = ensure_memories_folder()
-            output_filename = f"{safe_filename}_alive.mp4"
-            output_path = memories_dir / output_filename
-            
-            # Create dummy file if needed for demo so player works
-            if not output_path.exists():
-                try:
-                    with open(output_path, 'w') as f:
-                        f.write("Memory Placeholder")
-                except:
-                    pass
+            if file_type == "Audio":
+                type_writer("    >> I hear their voice. I will preserve that tone.")
+            elif file_type == "Photo":
+                type_writer("    >> A beautiful moment captured.")
+                
+        else:
+            collecting = False
 
-            type_writer("    Done. The memory has been revitalized.")
-            type_writer(f"    Saved to: Memories/{output_filename}")
-            
-            gentle_pause(0.5)
-            type_writer(f"\n    Would you like to witness {name} now? (yes/no)")
-            play_choice = input("    >> ").lower()
-            
-            if play_choice.startswith('y'):
-                play_memory(str(output_path))
-            
-            gentle_pause(1)
+    if not assets:
+        type_writer("    I did not receive any files. We can try again later.")
+        return
 
-    elif choice == '2':
-        type_writer("\n    Voice is the echo of the soul.")
-        
-    else:
-        type_writer("\n    Let's focus on a tribute.")
-
+    # --- THE ORCHESTRATION PHASE ---
     print("")
-    type_writer(f"    I have completed the tasks for {name}.")
-    print_quote()
+    type_writer(f"    I have collected {len(assets)} memories of {name}.")
+    type_writer("    I am now weaving them into a tribute.")
+    type_writer("    Applying the 'Cathedral' high-fidelity processing...")
     
-    # THE VIGIL - THIS IS THE FIX THAT STOPS IT FROM CLOSING
-    print("\n    The session is open as long as you need.")
-    print("    I will stay here.")
-    input("    Press [Enter] only when you are ready to close the sanctuary...")
+    # Simulating the heavy lifting
+    gentle_pause(1)
+    print("    [>>>.................] 20% - Analyzing emotional tone")
+    gentle_pause(1)
+    print("    [|||||||.............] 40% - Syncing voice modulation")
+    gentle_pause(1)
+    print("    [||||||||||||||......] 70% - Generating high-res motion")
+    gentle_pause(1.5)
+    print("    [||||||||||||||||||||] 100% - Finalizing render")
+    print("")
+    
+    # Define the destination
+    memories_dir = ensure_memories_folder()
+    output_filename = f"{safe_filename}_Tribute.mp4"
+    output_path = memories_dir / output_filename
+    
+    # --- SIMULATION FOR DEMO ---
+    if not output_path.exists():
+        try:
+            with open(output_path, 'w') as f:
+                f.write("Memory Placeholder")
+        except:
+            pass
+    # ---------------------------
+
+    type_writer("    It is done.")
+    type_writer(f"    The tribute has been saved to: Memories/{output_filename}")
+    
+    gentle_pause(1)
+    type_writer(f"\n    Would you like to witness {name}'s tribute now? (yes/no)")
+    play_choice = input("    >> ").lower()
+    
+    if play_choice.startswith('y'):
+        play_memory(str(output_path))
+    
+    gentle_pause(1)
+
+    # THE VIGIL
+    print("")
+    print_quote()
+    print("\n    I will keep this space open for you.")
+    print("    Take your time.")
+    input("    Press [Enter] only when you are ready to leave the sanctuary...")
 
 def main():
     try:
-        # Check arguments
-        if len(sys.argv) > 1 and sys.argv[1] in ['--cli', '--web', '--version', '--help']:
-             pass 
-        else:
-            run_guided()
+        run_guided()
     except KeyboardInterrupt:
         print("\n\n    Goodbye. Be gentle with yourself.")
         sys.exit(0)

@@ -12,7 +12,11 @@ import random
 import os
 import platform
 import subprocess
+import requests
 from pathlib import Path
+
+# --- CONFIGURATION ---
+API_URL = "http://localhost:8282/api/animate"
 
 # --- HELPERS ---
 def type_writer(text, speed=0.03):
@@ -65,7 +69,15 @@ def play_memory(file_path):
 def reveal_in_finder(folder_path):
     abs_path = os.path.abspath(folder_path)
     type_writer(f"    >> Opening folder...", speed=0.02)
-    subprocess.run(['open', abs_path])
+    try:
+        if platform.system() == 'Darwin':
+            subprocess.run(['open', abs_path])
+        elif platform.system() == 'Windows':
+            os.startfile(abs_path)
+        else:
+            subprocess.run(['xdg-open', abs_path])
+    except Exception as e:
+        print(f"    [!] Could not open folder: {e}")
 
 # --- MAIN LOGIC ---
 def run_guided():
@@ -89,16 +101,21 @@ def run_guided():
     assets = []
     collecting = True
     
-    type_writer("    I am ready to receive memories (Photos, Videos, Voice).")
+    type_writer("    I am ready to receive memories (Photos).")
     print("")
 
+    # Currently accepting single file for the V2 prototype
     while collecting:
-        type_writer(f"    Drag and drop a file here (or press Enter to finish):")
+        type_writer(f"    Drag and drop a photo here (or press Enter to finish):")
         path_input = input("    [File Path]: ").strip().strip("'").strip('"')
         
         if path_input:
-            assets.append(path_input)
-            type_writer(f"    >> Received memory.")
+            if os.path.exists(path_input):
+                assets.append(path_input)
+                type_writer(f"    >> Received memory.")
+                collecting = False # Enforce single file for now
+            else:
+                type_writer(f"    [!] I cannot find that file. Please try again.")
         else:
             collecting = False
 
@@ -109,59 +126,76 @@ def run_guided():
     # --- MUSIC SELECTION ---
     print("")
     type_writer("    Do they have a favorite song or artist?")
-    type_writer("    (Drag a music file, type a Name, or Enter to skip)")
-    music_input = input("    [Music]: ").strip().strip("'").strip('"')
+    
+    song_name = input("    [Song Name]: ").strip()
+    artist_name = input("    [Artist Name]: ").strip()
 
-    if music_input:
-        type_writer(f"    >> Soundtrack set.")
+    if song_name or artist_name:
+        type_writer(f"    >> Soundtrack context set: {song_name} // {artist_name}")
 
     # --- FORMAT SELECTION ---
     print("")
     type_writer("    How should I save this tribute?")
-    type_writer("    1. MOV (Best for Apple/QuickTime)")
+    type_writer("    1. MOV (Best for Apple/QuickTime/iPhone)")
     type_writer("    2. MP4 (Universal)")
     fmt_choice = input("    [1 or 2]: ").strip()
     
     extension = "mov" if fmt_choice == "1" else "mp4"
     
-    # --- ORCHESTRATION ---
+    # --- ORCHESTRATION (THE REAL API CALL) ---
     print("")
-    type_writer(f"    Weaving {len(assets)} memories for {name}...")
-    type_writer("    Applying 'Cathedral' high-fidelity processing...")
+    type_writer(f"    Weaving memories for {name}...")
+    type_writer("    Connecting to the Engine (Port 8282)...")
     
-    # Simulation
-    gentle_pause(1)
-    print("    [||||||||||..........] 50% - Syncing Audio")
-    gentle_pause(1)
-    print("    [||||||||||||||||||||] 100% - Rendering")
-    print("")
-    
-    # Output
+    # Prepare Data
+    target_file = assets[0]
     memories_dir = ensure_memories_folder()
     output_filename = f"{safe_filename}_Tribute.{extension}"
     output_path = memories_dir / output_filename
-    
-    # Placeholder creation (for demo flow)
-    if not output_path.exists():
-        try:
-            with open(output_path, 'w') as f:
-                f.write("Memory Placeholder")
-        except:
-            pass
 
-    type_writer("    It is done.")
-    
-    # Witness
+    try:
+        with open(target_file, 'rb') as f:
+            files = {'photo': f}
+            data = {
+                'style': 'gentle_smile',
+                'duration': 5,
+                'format': extension,
+                'song': song_name,
+                'artist': artist_name
+            }
+            
+            # Simulate progress while waiting for server
+            print("    [..........] Sending Data")
+            response = requests.post(API_URL, files=files, data=data, stream=True)
+            
+            if response.status_code == 200:
+                print("    [||||||||||] Rendering Complete")
+                with open(output_path, 'wb') as out_file:
+                    out_file.write(response.content)
+                type_writer("    It is done.")
+            else:
+                print(f"    [!] Engine Error: {response.status_code} - {response.text}")
+                return
+
+    except requests.exceptions.ConnectionError:
+        print("    [!] ERROR: Could not connect to 'api_server.py'.")
+        print("    [!] Please ensure the Engine is running in a separate terminal.")
+        return
+    except Exception as e:
+        print(f"    [!] Unexpected Error: {e}")
+        return
+
+    # --- WITNESS ---
     type_writer(f"\n    Would you like to witness {name}'s tribute now? (yes/no)")
     if input("    >> ").lower().startswith('y'):
         play_memory(str(output_path))
     
-    # Folder
+    # --- FOLDER ---
     type_writer(f"\n    Open the folder to keep this file? (yes/no)")
     if input("    >> ").lower().startswith('y'):
         reveal_in_finder(str(memories_dir))
 
-    # VIGIL
+    # --- VIGIL ---
     print("")
     print_quote()
     print("\n    The session is open. I will stay here.")

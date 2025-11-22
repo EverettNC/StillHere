@@ -50,21 +50,15 @@ def print_quote():
     print('\n\033[3m    "Grief is love with nowhere to go.')
     print('     Let\'s give it somewhere to be."\033[0m\n')
 
-# --- PLAYBACK LOGIC ---
-def play_memory(file_path):
-    """
-    Opens the memory file in the system's default media player.
-    This is the 'Witness' protocol.
-    """
+# --- PLAYBACK & FINDER LOGIC ---
+def open_file_in_viewer(file_path):
+    """Opens the file in the default player."""
     abs_path = os.path.abspath(file_path)
-    type_writer(f"\n    >> Opening the sanctuary viewer...", speed=0.02)
-    gentle_pause(1)
-    
     if not os.path.exists(abs_path):
-        print(f"    [!] System Notice: The memory is still rendering at {abs_path}")
-        print("    Please check the folder in a few moments.")
+        print(f"    [!] System Notice: The file is missing at {abs_path}")
         return
 
+    type_writer(f"\n    >> Opening viewer...", speed=0.02)
     system_name = platform.system()
     try:
         if system_name == 'Darwin':       # macOS
@@ -73,11 +67,23 @@ def play_memory(file_path):
             os.startfile(abs_path)
         else:                             # Linux
             subprocess.run(['xdg-open', abs_path], check=True)
-            
-        type_writer("    [Playing...]")
     except Exception as e:
-        print(f"\n    [!] I could not open the player automatically: {e}")
-        print(f"    Please manually open: {abs_path}")
+        print(f"    [!] Error opening player: {e}")
+
+def reveal_in_finder(folder_path):
+    """Opens the folder in Finder/Explorer so the user can see the file."""
+    abs_path = os.path.abspath(folder_path)
+    type_writer(f"    >> Revealing the Sanctuary Folder...", speed=0.02)
+    system_name = platform.system()
+    try:
+        if system_name == 'Darwin':       # macOS
+            subprocess.run(['open', abs_path], check=True)
+        elif system_name == 'Windows':    # Windows
+            os.startfile(abs_path)
+        else:                             # Linux
+            subprocess.run(['xdg-open', abs_path], check=True)
+    except Exception as e:
+        print(f"    [!] Error opening folder: {e}")
 
 def ensure_memories_folder():
     """Creates the Memories folder if it doesn't exist."""
@@ -88,36 +94,28 @@ def ensure_memories_folder():
 # --- MAIN LOGIC ---
 
 def run_guided():
-    """
-    The Compassionate Guide (Nana Banana).
-    Takes the user by the hand through the process.
-    """
     print_banner()
     
     type_writer("    Hello. I am Nana Banana, the keeper of this sanctuary.")
     gentle_pause(1)
     type_writer("    We are going to build something beautiful today.")
-    type_writer("    Not just a file, but a tribute worthy of the life lived.")
     print("")
     
     type_writer("    What is the name of the person we are honoring?")
     name = input("    >> ")
     
-    # Sanitize for filename
     safe_filename = "".join([c for c in name if c.isalpha() or c.isdigit() or c==' ']).strip().replace(' ', '_')
     
     print("")
-    type_writer(f"    Thank you. {name}. That is a strong name.")
+    type_writer(f"    Thank you. {name}.")
     gentle_pause(1)
     
-    # --- THE COLLECTION PHASE ---
+    # --- COLLECTION ---
     assets = []
     music_choice = None
     collecting = True
     
-    type_writer("    I am ready to receive their memories.")
-    type_writer("    You can give me photos, videos, or voice recordings.")
-    type_writer("    We will weave them together.")
+    type_writer("    I am ready to receive their memories (Photos, Videos, Voice).")
     print("")
 
     while collecting:
@@ -125,7 +123,6 @@ def run_guided():
         path_input = input("    [File Path]: ").strip().strip("'").strip('"')
         
         if path_input:
-            # Identify file type roughly
             ext = os.path.splitext(path_input)[1].lower()
             file_type = "Unknown"
             if ext in ['.jpg', '.jpeg', '.png', '.webp']: file_type = "Photo"
@@ -134,12 +131,6 @@ def run_guided():
             
             assets.append({'path': path_input, 'type': file_type})
             type_writer(f"    Received: {os.path.basename(path_input)} ({file_type})")
-            
-            if file_type == "Audio":
-                type_writer("    >> I hear their voice. I will preserve that tone.")
-            elif file_type == "Photo":
-                type_writer("    >> A beautiful moment captured.")
-                
         else:
             collecting = False
 
@@ -147,61 +138,48 @@ def run_guided():
         type_writer("    I did not receive any files. We can try again later.")
         return
 
-    # --- MUSIC SELECTION PHASE ---
+    # --- MUSIC ---
     print("")
-    type_writer("    Music carries the spirit when words fail.")
-    type_writer("    Do they have a favorite song or artist you would like to include?")
-    type_writer("    (You can drag a music file here, type an artist name, or press Enter to skip)")
+    type_writer("    Do they have a favorite song or artist?")
+    type_writer("    (Drag a music file here, or type an Artist Name, or Enter to skip)")
     music_input = input("    [Music]: ").strip().strip("'").strip('"')
 
     if music_input:
-        # Check if it's a file path
         if os.path.exists(music_input) and os.path.isfile(music_input):
              music_choice = {"type": "file", "value": music_input}
-             type_writer(f"    >> Excellent. I will weave '{os.path.basename(music_input)}' into the tribute.")
+             type_writer(f"    >> Using '{os.path.basename(music_input)}' as the soundtrack.")
         else:
              music_choice = {"type": "artist", "value": music_input}
-             type_writer(f"    >> {music_input}. A wonderful choice. I will find a fitting melody.")
-    else:
-        type_writer("    >> I will select a gentle, respectful ambient track.")
-
-
-    # --- THE ORCHESTRATION PHASE ---
-    print("")
-    type_writer(f"    I have collected {len(assets)} memories of {name}.")
-    if music_choice:
-        type_writer("    And the music to guide them home.")
-        
-    type_writer("    I am now weaving them into a tribute.")
-    type_writer("    Applying the 'Cathedral' high-fidelity processing...")
+             type_writer(f"    >> {music_input}. I will find a fitting melody.")
     
-    # Simulating the heavy lifting
+    # --- ORCHESTRATION ---
+    print("")
+    type_writer(f"    Weaving {len(assets)} memories into a tribute for {name}...")
+    type_writer("    Applying 'Cathedral' processing...")
+    
+    # Simulating
     gentle_pause(1)
-    print("    [>>>.................] 20% - Analyzing emotional tone")
-    gentle_pause(1)
-    print("    [|||||||.............] 40% - Syncing voice modulation")
-    gentle_pause(1)
-    print("    [||||||||||||||......] 70% - Generating high-res motion")
-    gentle_pause(1.5)
-    print("    [||||||||||||||||||||] 100% - Finalizing render")
+    print("    [||||||||||||||||||||] 100% - Rendering complete")
     print("")
     
-    # Define the destination
     memories_dir = ensure_memories_folder()
     output_filename = f"{safe_filename}_Tribute.mp4"
     output_path = memories_dir / output_filename
     
-    # --- SIMULATION FOR DEMO ---
+    # --- PLACEHOLDER CREATION (If API not running) ---
     if not output_path.exists():
         try:
+            # Create a dummy file for the demo flow
             with open(output_path, 'w') as f:
                 f.write("Memory Placeholder")
         except:
             pass
-    # ---------------------------
+
+    full_absolute_path = os.path.abspath(output_path)
+    folder_absolute_path = os.path.abspath(memories_dir)
 
     type_writer("    It is done.")
-    type_writer(f"    The tribute has been saved to: Memories/{output_filename}")
+    print(f"\n    LOCATION: {full_absolute_path}")
     
     gentle_pause(1)
     type_writer(f"\n    Would you like to witness {name}'s tribute now? (yes/no)")
@@ -210,13 +188,17 @@ def run_guided():
     if play_choice.startswith('y'):
         play_memory(str(output_path))
     
-    gentle_pause(1)
+    # NEW: Ask to show the folder
+    type_writer(f"\n    Would you like me to open the folder so you can keep this file? (yes/no)")
+    folder_choice = input("    >> ").lower()
+    
+    if folder_choice.startswith('y'):
+        reveal_in_finder(folder_absolute_path)
 
-    # THE VIGIL
+    # VIGIL
     print("")
     print_quote()
-    print("\n    I will keep this space open for you.")
-    print("    Take your time.")
+    print("\n    The session is open as long as you need.")
     input("    Press [Enter] only when you are ready to leave the sanctuary...")
 
 def main():

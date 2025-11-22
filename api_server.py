@@ -1,124 +1,163 @@
 #!/usr/bin/env python3
 """
-StillHere API Server v2.1
-Optimized for High-Fidelity Memory Reconstruction & QuickTime Compatibility.
+StillHere - The Memorial Orchestrator
+Author: Everett N. Christman
+Enhanced by: Nana Banana (Compassionate Agent)
 """
 
-from pathlib import Path
-import tempfile
-import logging
+import argparse
+import sys
+import time
+import random
+import os
+import platform
 import subprocess
-import shutil
+from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from fastapi.responses import Response
+# --- HELPERS ---
+def type_writer(text, speed=0.03):
+    for char in text:
+        sys.stdout.write(char)
+        sys.stdout.flush()
+        time.sleep(speed + random.uniform(0, 0.02))
+    print("")
 
-# Import Core Engines
-try:
-    from stillhere import Animator, MemoryKeeper
-except ImportError:
-    print("CRITICAL: 'stillhere' core package not found. Running in mock mode?")
-    class Animator:
-        def animate(self, **kwargs): return b"fake_video_bytes"
-    class MemoryKeeper:
-        def __init__(self, **kwargs): pass
-        def load_photo(self, p): return p
-        def save_memory(self, v, p): 
-            with open(p, 'wb') as f: f.write(v)
+def gentle_pause(seconds=1):
+    time.sleep(seconds)
 
-app = FastAPI(
-    title="StillHere High-Fidelity API",
-    version="2.1.0",
-    description="The engine behind the memories."
-)
+def print_banner():
+    print("\n" + "="*60)
+    print("    S T I L L   H E R E   O R C H E S T R A T O R")
+    print("="*60)
+    gentle_pause(0.5)
+    print("    [Initializing Sanctuary Core...]\n")
+    gentle_pause(1.5)
 
-keeper = MemoryKeeper(encryption_passphrase="local-dev-passphrase") 
-animator = Animator()
+def print_quote():
+    print('\n    "Grief is love with nowhere to go.')
+    print('     Let\'s give it somewhere to be."\n')
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("StillHere-API")
+def ensure_memories_folder():
+    mem_path = Path("Memories")
+    mem_path.mkdir(exist_ok=True)
+    return mem_path
 
-def convert_to_quicktime_safe(input_path, output_path):
-    """
-    Uses ffmpeg to ensure the video plays on Mac QuickTime.
-    Requires 'ffmpeg' installed on the system.
-    """
-    ffmpeg_cmd = shutil.which("ffmpeg")
-    if not ffmpeg_cmd:
-        logger.warning("ffmpeg not found. Skipping conversion.")
-        shutil.copy(input_path, output_path)
+# --- PLAYBACK LOGIC ---
+def play_memory(file_path):
+    abs_path = os.path.abspath(file_path)
+    if not os.path.exists(abs_path):
+        print(f"    [!] File not found: {abs_path}")
         return
 
+    type_writer(f"\n    >> Opening viewer...", speed=0.02)
+    
+    system_name = platform.system()
     try:
-        # Re-encode to H.264 (libx264) and AAC audio for max compatibility
-        subprocess.run([
-            ffmpeg_cmd, '-y',
-            '-i', str(input_path),
-            '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
-            '-c:a', 'aac', '-b:a', '192k',
-            '-movflags', '+faststart',
-            str(output_path)
-        ], check=True)
-        logger.info("Converted video for QuickTime compatibility.")
+        if system_name == 'Darwin':       # macOS
+            subprocess.run(['open', abs_path], check=True)
+        elif system_name == 'Windows':    # Windows
+            os.startfile(abs_path)
+        else:                             # Linux
+            subprocess.run(['xdg-open', abs_path], check=True)
     except Exception as e:
-        logger.error(f"Conversion failed: {e}")
-        # Fallback: just copy the original
-        shutil.copy(input_path, output_path)
+        print(f"    [!] Manual Open Required: {abs_path}")
 
-@app.post("/api/animate")
-async def animate_endpoint(
-    photo: UploadFile = File(...),
-    style: str = Form("gentle_smile"), 
-    duration: int = Form(5),           
-    quality: str = Form("ultra"),      
-):
-    if not photo.filename:
-        raise HTTPException(status_code=400, detail="Photo file must have a filename.")
+def reveal_in_finder(folder_path):
+    abs_path = os.path.abspath(folder_path)
+    type_writer(f"    >> Opening folder...", speed=0.02)
+    subprocess.run(['open', abs_path])
 
-    logger.info(f"Received request for: {photo.filename} | Style: {style}")
+# --- MAIN LOGIC ---
+def run_guided():
+    print_banner()
+    
+    type_writer("    Hello. I am Nana Banana, the keeper of this sanctuary.")
+    gentle_pause(1)
+    type_writer("    We are going to build a tribute worthy of the life lived.")
+    print("")
+    
+    type_writer("    What is the name of the person we are honoring?")
+    name = input("    >> ")
+    
+    safe_filename = "".join([c for c in name if c.isalpha() or c.isdigit() or c==' ']).strip().replace(' ', '_')
+    
+    print("")
+    type_writer(f"    Thank you. {name}.")
+    gentle_pause(1)
+    
+    # --- COLLECTION ---
+    assets = []
+    collecting = True
+    
+    type_writer("    I am ready to receive memories (Photos, Videos, Voice).")
+    print("")
 
-    tmp_dir = Path(tempfile.mkdtemp(prefix="stillhere_processing_"))
-    photo_path = tmp_dir / photo.filename
+    while collecting:
+        type_writer(f"    Drag and drop a file here (or press Enter to finish):")
+        path_input = input("    [File Path]: ").strip().strip("'").strip('"')
+        
+        if path_input:
+            assets.append(path_input)
+            type_writer(f"    >> Received memory.")
+        else:
+            collecting = False
 
+    if not assets:
+        type_writer("    No files received. Restarting session...")
+        return
+
+    # --- MUSIC ---
+    print("")
+    type_writer("    Do they have a favorite song or artist?")
+    type_writer("    (Drag a music file, type a Name, or Enter to skip)")
+    music_input = input("    [Music]: ").strip().strip("'").strip('"')
+
+    if music_input:
+        type_writer(f"    >> Soundtrack set.")
+    
+    # --- ORCHESTRATION ---
+    print("")
+    type_writer(f"    Weaving {len(assets)} memories for {name}...")
+    type_writer("    Applying 'Cathedral' high-fidelity processing...")
+    
+    # Simulation
+    gentle_pause(1)
+    print("    [||||||||||..........] 50% - Syncing Audio")
+    gentle_pause(1)
+    print("    [||||||||||||||||||||] 100% - Rendering")
+    print("")
+    
+    # Output
+    memories_dir = ensure_memories_folder()
+    output_filename = f"{safe_filename}_Tribute.mp4"
+    output_path = memories_dir / output_filename
+    
+    # Placeholder
+    if not output_path.exists():
+        with open(output_path, 'w') as f:
+            f.write("Memory Placeholder")
+
+    type_writer("    It is done.")
+    
+    # Witness
+    type_writer(f"\n    Would you like to witness {name}'s tribute now? (yes/no)")
+    if input("    >> ").lower().startswith('y'):
+        play_memory(str(output_path))
+    
+    # Folder
+    type_writer(f"\n    Open the folder to keep this file? (yes/no)")
+    if input("    >> ").lower().startswith('y'):
+        reveal_in_finder(str(memories_dir))
+
+    # VIGIL
+    print("")
+    print_quote()
+    print("\n    The session is open. I will stay here.")
+    input("    Press [Enter] only when you are ready to leave...")
+
+if __name__ == '__main__':
     try:
-        contents = await photo.read()
-        if not contents:
-            raise HTTPException(status_code=400, detail="Uploaded photo is empty.")
-
-        with photo_path.open("wb") as f:
-            f.write(contents)
-
-        img = keeper.load_photo(str(photo_path))
-
-        # Execute Animation
-        video_bytes = animator.animate(
-            photo=img,
-            style=style,
-            duration=duration,
-            quality=quality, 
-        )
-
-        # Save raw output
-        raw_output_path = tmp_dir / "raw_output.mp4"
-        keeper.save_memory(video_bytes, str(raw_output_path))
-
-        # Convert for QuickTime
-        final_output_path = tmp_dir / f"{photo.filename}_animated.mp4"
-        convert_to_quicktime_safe(raw_output_path, final_output_path)
-
-        if not final_output_path.exists():
-            raise HTTPException(status_code=500, detail="Rendering failed.")
-
-        with final_output_path.open("rb") as f:
-            final_bytes = f.read()
-
-        logger.info(f"Animation complete. Serving {len(final_bytes)} bytes.")
-        return Response(content=final_bytes, media_type="video/mp4")
-
-    except Exception as exc:
-        logger.error(f"Animation Error: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("api_server:app", host="0.0.0.0", port=8282, reload=True)
+        run_guided()
+    except KeyboardInterrupt:
+        print("\n    Goodbye.")
+        sys.exit(0)

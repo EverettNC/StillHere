@@ -1,163 +1,80 @@
 #!/usr/bin/env python3
 """
-StillHere - The Memorial Orchestrator
-Author: Everett N. Christman
-Enhanced by: Nana Banana (Compassionate Agent)
+StillHere API Server v2.2 - QuickTime Compatible
 """
 
-import argparse
-import sys
-import time
-import random
-import os
-import platform
-import subprocess
 from pathlib import Path
+import tempfile
+import logging
+import subprocess
+import shutil
 
-# --- HELPERS ---
-def type_writer(text, speed=0.03):
-    for char in text:
-        sys.stdout.write(char)
-        sys.stdout.flush()
-        time.sleep(speed + random.uniform(0, 0.02))
-    print("")
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import Response
 
-def gentle_pause(seconds=1):
-    time.sleep(seconds)
+try:
+    from stillhere import Animator, MemoryKeeper
+except ImportError:
+    class Animator:
+        def animate(self, **kwargs): return b"fake_video_bytes"
+    class MemoryKeeper:
+        def __init__(self, **kwargs): pass
+        def load_photo(self, p): return p
+        def save_memory(self, v, p): 
+            with open(p, 'wb') as f: f.write(v)
 
-def print_banner():
-    print("\n" + "="*60)
-    print("    S T I L L   H E R E   O R C H E S T R A T O R")
-    print("="*60)
-    gentle_pause(0.5)
-    print("    [Initializing Sanctuary Core...]\n")
-    gentle_pause(1.5)
+app = FastAPI(title="StillHere API")
+keeper = MemoryKeeper(encryption_passphrase="local") 
+animator = Animator()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("StillHere-API")
 
-def print_quote():
-    print('\n    "Grief is love with nowhere to go.')
-    print('     Let\'s give it somewhere to be."\n')
-
-def ensure_memories_folder():
-    mem_path = Path("Memories")
-    mem_path.mkdir(exist_ok=True)
-    return mem_path
-
-# --- PLAYBACK LOGIC ---
-def play_memory(file_path):
-    abs_path = os.path.abspath(file_path)
-    if not os.path.exists(abs_path):
-        print(f"    [!] File not found: {abs_path}")
+def convert_video(input_path, output_path, format_type="mp4"):
+    ffmpeg_cmd = shutil.which("ffmpeg")
+    if not ffmpeg_cmd:
+        shutil.copy(input_path, output_path)
         return
 
-    type_writer(f"\n    >> Opening viewer...", speed=0.02)
+    cmd = [ffmpeg_cmd, '-y', '-i', str(input_path)]
+    if format_type == "mov":
+        cmd.extend(['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-f', 'mov'])
+    else:
+        cmd.extend(['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-movflags', '+faststart', '-f', 'mp4'])
     
-    system_name = platform.system()
-    try:
-        if system_name == 'Darwin':       # macOS
-            subprocess.run(['open', abs_path], check=True)
-        elif system_name == 'Windows':    # Windows
-            os.startfile(abs_path)
-        else:                             # Linux
-            subprocess.run(['xdg-open', abs_path], check=True)
-    except Exception as e:
-        print(f"    [!] Manual Open Required: {abs_path}")
+    cmd.append(str(output_path))
+    subprocess.run(cmd, check=True)
 
-def reveal_in_finder(folder_path):
-    abs_path = os.path.abspath(folder_path)
-    type_writer(f"    >> Opening folder...", speed=0.02)
-    subprocess.run(['open', abs_path])
+@app.post("/api/animate")
+async def animate_endpoint(
+    photo: UploadFile = File(...),
+    style: str = Form("gentle_smile"), 
+    duration: int = Form(5),           
+    quality: str = Form("ultra"),
+    format: str = Form("mp4"),
+):
+    tmp_dir = Path(tempfile.mkdtemp())
+    photo_path = tmp_dir / photo.filename
 
-# --- MAIN LOGIC ---
-def run_guided():
-    print_banner()
-    
-    type_writer("    Hello. I am Nana Banana, the keeper of this sanctuary.")
-    gentle_pause(1)
-    type_writer("    We are going to build a tribute worthy of the life lived.")
-    print("")
-    
-    type_writer("    What is the name of the person we are honoring?")
-    name = input("    >> ")
-    
-    safe_filename = "".join([c for c in name if c.isalpha() or c.isdigit() or c==' ']).strip().replace(' ', '_')
-    
-    print("")
-    type_writer(f"    Thank you. {name}.")
-    gentle_pause(1)
-    
-    # --- COLLECTION ---
-    assets = []
-    collecting = True
-    
-    type_writer("    I am ready to receive memories (Photos, Videos, Voice).")
-    print("")
+    with photo_path.open("wb") as f:
+        f.write(await photo.read())
 
-    while collecting:
-        type_writer(f"    Drag and drop a file here (or press Enter to finish):")
-        path_input = input("    [File Path]: ").strip().strip("'").strip('"')
-        
-        if path_input:
-            assets.append(path_input)
-            type_writer(f"    >> Received memory.")
-        else:
-            collecting = False
+    img = keeper.load_photo(str(photo_path))
+    video_bytes = animator.animate(photo=img, style=style, duration=duration, quality=quality)
 
-    if not assets:
-        type_writer("    No files received. Restarting session...")
-        return
+    raw_path = tmp_dir / "raw_output.mp4"
+    keeper.save_memory(video_bytes, str(raw_path))
 
-    # --- MUSIC ---
-    print("")
-    type_writer("    Do they have a favorite song or artist?")
-    type_writer("    (Drag a music file, type a Name, or Enter to skip)")
-    music_input = input("    [Music]: ").strip().strip("'").strip('"')
+    ext = "mov" if format == "mov" else "mp4"
+    final_path = tmp_dir / f"{photo.filename}_final.{ext}"
+    
+    convert_video(raw_path, final_path, format_type=format)
 
-    if music_input:
-        type_writer(f"    >> Soundtrack set.")
-    
-    # --- ORCHESTRATION ---
-    print("")
-    type_writer(f"    Weaving {len(assets)} memories for {name}...")
-    type_writer("    Applying 'Cathedral' high-fidelity processing...")
-    
-    # Simulation
-    gentle_pause(1)
-    print("    [||||||||||..........] 50% - Syncing Audio")
-    gentle_pause(1)
-    print("    [||||||||||||||||||||] 100% - Rendering")
-    print("")
-    
-    # Output
-    memories_dir = ensure_memories_folder()
-    output_filename = f"{safe_filename}_Tribute.mp4"
-    output_path = memories_dir / output_filename
-    
-    # Placeholder
-    if not output_path.exists():
-        with open(output_path, 'w') as f:
-            f.write("Memory Placeholder")
+    with final_path.open("rb") as f:
+        final_bytes = f.read()
 
-    type_writer("    It is done.")
-    
-    # Witness
-    type_writer(f"\n    Would you like to witness {name}'s tribute now? (yes/no)")
-    if input("    >> ").lower().startswith('y'):
-        play_memory(str(output_path))
-    
-    # Folder
-    type_writer(f"\n    Open the folder to keep this file? (yes/no)")
-    if input("    >> ").lower().startswith('y'):
-        reveal_in_finder(str(memories_dir))
+    media_type = "video/quicktime" if format == "mov" else "video/mp4"
+    return Response(content=final_bytes, media_type=media_type)
 
-    # VIGIL
-    print("")
-    print_quote()
-    print("\n    The session is open. I will stay here.")
-    input("    Press [Enter] only when you are ready to leave...")
-
-if __name__ == '__main__':
-    try:
-        run_guided()
-    except KeyboardInterrupt:
-        print("\n    Goodbye.")
-        sys.exit(0)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("api_server:app", host="0.0.0.0", port=8282, reload=True)

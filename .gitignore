@@ -78,6 +78,7 @@ env/
 ENV/
 env.bak/
 venv.bak/
+HERE/
 
 # IDEs
 .vscode/

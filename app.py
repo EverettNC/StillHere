@@ -85,7 +85,7 @@ def run_guided():
     type_writer(f"    Thank you. {name}.")
     gentle_pause(1)
     
-    # --- COLLECTION ---
+    # --- COLLECTION LOOP ---
     assets = []
     collecting = True
     
@@ -106,7 +106,7 @@ def run_guided():
         type_writer("    No files received. Restarting session...")
         return
 
-    # --- MUSIC ---
+    # --- MUSIC SELECTION ---
     print("")
     type_writer("    Do they have a favorite song or artist?")
     type_writer("    (Drag a music file, type a Name, or Enter to skip)")
@@ -114,6 +114,15 @@ def run_guided():
 
     if music_input:
         type_writer(f"    >> Soundtrack set.")
+
+    # --- FORMAT SELECTION ---
+    print("")
+    type_writer("    How should I save this tribute?")
+    type_writer("    1. MOV (Best for Apple/QuickTime)")
+    type_writer("    2. MP4 (Universal)")
+    fmt_choice = input("    [1 or 2]: ").strip()
+    
+    extension = "mov" if fmt_choice == "1" else "mp4"
     
     # --- ORCHESTRATION ---
     print("")
@@ -129,13 +138,16 @@ def run_guided():
     
     # Output
     memories_dir = ensure_memories_folder()
-    output_filename = f"{safe_filename}_Tribute.mp4"
+    output_filename = f"{safe_filename}_Tribute.{extension}"
     output_path = memories_dir / output_filename
     
-    # Placeholder
+    # Placeholder creation (for demo flow)
     if not output_path.exists():
-        with open(output_path, 'w') as f:
-            f.write("Memory Placeholder")
+        try:
+            with open(output_path, 'w') as f:
+                f.write("Memory Placeholder")
+        except:
+            pass
 
     type_writer("    It is done.")
     

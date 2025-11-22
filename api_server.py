@@ -2,16 +2,15 @@
 """
 StillHere API Server v2.2 - QuickTime Compatible
 """
-
 from pathlib import Path
 import tempfile
 import logging
 import subprocess
 import shutil
-
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import Response
 
+# Mock core if missing
 try:
     from stillhere import Animator, MemoryKeeper
 except ImportError:
@@ -37,19 +36,14 @@ def convert_video(input_path, output_path, format_type="mp4"):
 
     cmd = [ffmpeg, '-y', '-i', str(input_path)]
     if format_type == "mov":
-        # Pro settings for MOV
+        # QuickTime Optimized
         cmd.extend(['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-f', 'mov'])
     else:
-        # Universal settings for MP4
+        # MP4 Universal
         cmd.extend(['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-movflags', '+faststart', '-f', 'mp4'])
     
     cmd.append(str(output_path))
-    
-    try:
-        subprocess.run(cmd, check=True)
-    except Exception as e:
-        logger.error(f"Conversion failed: {e}")
-        shutil.copy(input_path, output_path)
+    subprocess.run(cmd, check=True)
 
 @app.post("/api/animate")
 async def animate_endpoint(
@@ -68,9 +62,11 @@ async def animate_endpoint(
     img = keeper.load_photo(str(photo_path))
     video_bytes = animator.animate(photo=img, style=style, duration=duration, quality=quality)
 
+    # Save Raw
     raw_path = tmp_dir / "raw_output.mp4"
     keeper.save_memory(video_bytes, str(raw_path))
 
+    # Convert
     ext = "mov" if format == "mov" else "mp4"
     final_path = tmp_dir / f"{photo.filename}_final.{ext}"
     

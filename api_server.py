@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-StillHere API Server v2.3 - Editor Compatible
+StillHere API Server v2.4 - Metadata & Music Aware
 """
 
 from pathlib import Path
@@ -67,10 +67,14 @@ def convert_video(input_path, output_path, format_type="mp4"):
 async def animate_endpoint(
     photo: UploadFile = File(...),
     style: str = Form("gentle_smile"), 
-    duration: int = Form(5),           
+    duration: int = Form(5),            
     quality: str = Form("ultra"),
     format: str = Form("mp4"),
+    song: str = Form(None),   # NEW: Context awareness
+    artist: str = Form(None)  # NEW: Context awareness
 ):
+    logger.info(f"Orchestrating memory. Context: {song} by {artist} | Format: {format}")
+
     tmp_dir = Path(tempfile.mkdtemp())
     photo_path = tmp_dir / photo.filename
 
@@ -80,11 +84,19 @@ async def animate_endpoint(
     img = keeper.load_photo(str(photo_path))
     video_bytes = animator.animate(photo=img, style=style, duration=duration, quality=quality)
 
-    # Save Raw
+    # Save Raw (This simulates the AI output)
     raw_path = tmp_dir / "raw_output.mp4"
     keeper.save_memory(video_bytes, str(raw_path))
 
-    # Convert
+    # If we are mocking, the raw file might not be valid video, let's ensure it is for testing
+    # This little block ensures FFMPEG has something to chew on if 'video_bytes' was just text
+    if b"fake_video_bytes" in video_bytes:
+         subprocess.run([
+            "ffmpeg", "-y", "-f", "lavfi", "-i", "color=c=black:s=1024x576:d=5",
+            "-vf", "format=yuv420p", str(raw_path)
+        ], check=True)
+
+    # Convert to User Preference
     ext = "mov" if format == "mov" else "mp4"
     final_path = tmp_dir / f"{photo.filename}_final.{ext}"
     

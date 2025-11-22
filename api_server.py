@@ -30,19 +30,26 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("StillHere-API")
 
 def convert_video(input_path, output_path, format_type="mp4"):
-    ffmpeg_cmd = shutil.which("ffmpeg")
-    if not ffmpeg_cmd:
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
         shutil.copy(input_path, output_path)
         return
 
-    cmd = [ffmpeg_cmd, '-y', '-i', str(input_path)]
+    cmd = [ffmpeg, '-y', '-i', str(input_path)]
     if format_type == "mov":
+        # Pro settings for MOV
         cmd.extend(['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-f', 'mov'])
     else:
+        # Universal settings for MP4
         cmd.extend(['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-movflags', '+faststart', '-f', 'mp4'])
     
     cmd.append(str(output_path))
-    subprocess.run(cmd, check=True)
+    
+    try:
+        subprocess.run(cmd, check=True)
+    except Exception as e:
+        logger.error(f"Conversion failed: {e}")
+        shutil.copy(input_path, output_path)
 
 @app.post("/api/animate")
 async def animate_endpoint(

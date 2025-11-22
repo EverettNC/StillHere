@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
 StillHere - The Memorial Orchestrator
-operator: Everett N. Christman
-mission: Grief Processing / Memorial Automation
+V3.0 - Batch Processing & Natural Voice
 """
 
 import sys
@@ -17,39 +16,40 @@ from pathlib import Path
 # --- CONFIGURATION ---
 API_URL = "http://localhost:8282/api/animate"
 
-# --- VOICE & EMPATHY ENGINE ---
+# --- VOICE ENGINE (NATURAL) ---
 def speak(text):
     """
-    Uses the system's native Text-to-Speech to give Nana a voice.
-    Optimized for macOS (Samantha/Ava) for immediate comfort.
+    Uses the system default voice to avoid 'War Games' robotic sounds.
     """
     try:
         if platform.system() == 'Darwin':
-            # 'Samantha' is usually the default compassionate voice on Mac
-            subprocess.run(['say', '-v', 'Samantha', text])
+            # Removing '-v Samantha' allows macOS to use your preferred System Voice (Siri/Enhanced)
+            subprocess.run(['say', text])
         elif platform.system() == 'Windows':
-            # Fallback for Windows (PowerShell speech)
             cmd = f'Add-Type –AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak("{text}");'
             subprocess.run(["powershell", "-Command", cmd])
-        else:
-            # Linux fallback
-            subprocess.run(['espeak', text])
     except Exception:
-        pass # If voice fails, we silently continue with text
+        pass 
 
-def type_writer(text, speed=0.04):
-    """Writes text slowly to match the speaking cadence."""
+def type_writer(text):
     print(f"\n    >> {text}")
-    # We don't sleep here per char because the voice takes time, 
-    # strictly visual formatting.
 
 def communicate(text):
-    """Simultaneous Voice and Text."""
     type_writer(text)
     speak(text)
 
-def gentle_pause(seconds=1):
-    time.sleep(seconds)
+def clean_path(path_input):
+    """
+    Fixes the 'File Not Found' error by removing Mac terminal escape characters.
+    """
+    if not path_input: return ""
+    # Remove wrapping quotes
+    clean = path_input.strip().strip("'").strip('"')
+    # Remove the backslash used to escape spaces on Mac (e.g. "My\ Photo.jpg" -> "My Photo.jpg")
+    clean = clean.replace("\\ ", " ") 
+    # Just in case there are rogue backslashes left (careful with this one)
+    clean = clean.replace("\\", "") 
+    return clean
 
 def ensure_memories_folder():
     mem_path = Path("Memories")
@@ -57,19 +57,15 @@ def ensure_memories_folder():
     return mem_path
 
 # --- PLAYBACK LOGIC ---
-def play_memory(file_path):
+def play_video(file_path):
     abs_path = os.path.abspath(file_path)
-    communicate("Opening the memory now.")
-    
     try:
         if platform.system() == 'Darwin':
-            subprocess.run(['open', abs_path], check=True)
+            subprocess.run(['open', abs_path])
         elif platform.system() == 'Windows':
             os.startfile(abs_path)
-        else:
-            subprocess.run(['xdg-open', abs_path], check=True)
     except Exception:
-        communicate("I placed the file in your folder.")
+        pass
 
 def reveal_in_finder(folder_path):
     abs_path = os.path.abspath(folder_path)
@@ -84,91 +80,96 @@ def run_guided():
     print("    S T I L L   H E R E")
     print("="*60 + "\n")
     
-    # THE INTRO
-    communicate("I am sorry for your loss.")
-    gentle_pause(0.5)
-    communicate("My name is Nana Banana. I am here to help you carry this.")
-    gentle_pause(0.5)
-    communicate("You don't need to worry about the details. I will handle the technical parts.")
+    communicate("I am ready. We are going to handle multiple memories.")
     
     # NAME
-    communicate("First, just tell me. Who are we honoring today?")
+    communicate("Who are we honoring?")
     name = input("    [Name]: ")
+    safe_name = "".join([c for c in name if c.isalpha() or c.isdigit() or c==' ']).strip().replace(' ', '_')
     
-    safe_filename = "".join([c for c in name if c.isalpha() or c.isdigit() or c==' ']).strip().replace(' ', '_')
-    
-    communicate(f"Thank you. Let's make something beautiful for {name}.")
-    
-    # COLLECTION
-    communicate("Please, drag and drop the photo you want to use into this window. Then press Enter.")
-    
+    # BATCH COLLECTION LOOP
     assets = []
+    communicate(f"Okay. Drag your photos or videos here, one by one.")
+    communicate("Press Enter after each file. When you are done, just press Enter on a blank line.")
+    
     while True:
-        path_input = input("    [File Path]: ").strip().strip("'").strip('"')
-        if path_input and os.path.exists(path_input):
-            assets.append(path_input)
-            break
-        elif not path_input:
-            communicate("I didn't catch that. Please drag the photo in.")
+        raw_input = input(f"    [File #{len(assets)+1}]: ")
+        
+        # 1. Check if user is done
+        if not raw_input:
+            if len(assets) > 0:
+                break
+            else:
+                communicate("I need at least one file to begin.")
+                continue
+        
+        # 2. Clean and Verify Path
+        file_path = clean_path(raw_input)
+        
+        if os.path.exists(file_path):
+            assets.append(file_path)
+            print(f"       -> Added: {os.path.basename(file_path)}")
         else:
-            communicate("I cannot find that file. Please try again.")
+            communicate("I can't find that file. Try dragging it in again.")
+            print(f"       (Debug: System saw path as: {file_path})")
 
-    # CONTEXT (Optional)
-    communicate("Is there a specific song or artist that reminds you of them? If not, just press Enter.")
+    communicate(f"I have {len(assets)} memories collected.")
+
+    # CONTEXT
+    communicate("Is there a song or artist for these? If not, press Enter.")
     song_info = input("    [Song/Artist]: ")
     
-    communicate("Understood.")
-
-    # FORMAT ( simplified for grief mode - defaulting to high quality)
-    communicate("I am preparing the video for your iPhone and computer.")
-    extension = "mov"
+    # EXECUTION LOOP
+    communicate("I am starting the work. This might take a moment for each one.")
     
-    # ORCHESTRATION
-    communicate(f"Please wait a moment. I am weaving the memory for {name}.")
-    
-    # Prepare Data
-    target_file = assets[0]
     memories_dir = ensure_memories_folder()
-    output_filename = f"{safe_filename}_Tribute.{extension}"
-    output_path = memories_dir / output_filename
+    completed_files = []
 
-    try:
-        with open(target_file, 'rb') as f:
-            files = {'photo': f}
-            data = {
-                'style': 'gentle_smile',
-                'duration': 5,
-                'format': extension,
-                'song': song_info,
-                'artist': "" 
-            }
-            
-            print("    [Processing...]")
-            response = requests.post(API_URL, files=files, data=data)
-            
-            if response.status_code == 200:
-                with open(output_path, 'wb') as out_file:
-                    out_file.write(response.content)
-                communicate("It is finished.")
-            else:
-                communicate("I had a small trouble with the engine, but I am still here.")
-                print(f"    Debug: {response.text}")
-                return
+    for index, target_file in enumerate(assets):
+        print(f"\n    --- Processing File {index + 1}/{len(assets)} ---")
+        
+        # Generate output name (e.g. Name_1.mov, Name_2.mov)
+        extension = "mov"
+        output_filename = f"{safe_name}_{index + 1}.{extension}"
+        output_path = memories_dir / output_filename
 
-    except requests.exceptions.ConnectionError:
-        communicate("I cannot reach the engine. Please make sure the server script is running.")
-        return
+        try:
+            with open(target_file, 'rb') as f:
+                files = {'photo': f}
+                data = {
+                    'style': 'gentle_smile',
+                    'duration': 5,
+                    'format': extension,
+                    'song': song_info,
+                    'artist': "" 
+                }
+                
+                response = requests.post(API_URL, files=files, data=data)
+                
+                if response.status_code == 200:
+                    with open(output_path, 'wb') as out_file:
+                        out_file.write(response.content)
+                    print(f"    -> Finished: {output_filename}")
+                    completed_files.append(output_path)
+                else:
+                    print(f"    [!] Error on file {index+1}: {response.text}")
 
-    # PLAYBACK
-    communicate("Would you like to see it now? Type yes or no.")
-    if input("    >> ").lower().startswith('y'):
-        play_memory(str(output_path))
+        except Exception as e:
+            print(f"    [!] Connection failed on file {index+1}: {e}")
+
+    # FINISH
+    communicate("All tasks are complete.")
     
-    communicate("I have saved this in your Memories folder.")
-    communicate("Take your time. I am signing off, but I am always here.")
-    
-    gentle_pause(2)
-    reveal_in_finder(str(memories_dir))
+    if completed_files:
+        communicate("I am opening the folder for you now.")
+        reveal_in_finder(str(memories_dir))
+        
+        # Optional: Play the first one
+        communicate("Would you like to watch the first one? (yes/no)")
+        if input("    >> ").lower().startswith('y'):
+            play_video(str(completed_files[0]))
+
+    communicate("I am still here if you need more.")
 
 if __name__ == '__main__':
     try:

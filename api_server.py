@@ -11,10 +11,13 @@ import logging
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import Response
 
+# Import Core Engines
+# Ensure 'stillhere' package is installed in the environment
 try:
     from stillhere import Animator, MemoryKeeper
 except ImportError:
     print("CRITICAL: 'stillhere' core package not found. Running in mock mode?")
+    # Mock classes for testing/dev if core is missing
     class Animator:
         def animate(self, **kwargs): return b"fake_video_bytes"
     class MemoryKeeper:
@@ -29,6 +32,7 @@ app = FastAPI(
     description="The engine behind the memories."
 )
 
+# Configure for Maximum Privacy & Quality
 keeper = MemoryKeeper(encryption_passphrase="local-dev-passphrase") 
 animator = Animator()
 
@@ -37,24 +41,30 @@ logger = logging.getLogger("StillHere-API")
 
 @app.get("/health")
 async def health():
+    """Heartbeat check."""
     return {"status": "alive", "service": "stillhere-api", "mode": "high-fidelity"}
 
 @app.post("/api/animate")
 async def animate_endpoint(
     photo: UploadFile = File(...),
-    style: str = Form("gentle_smile"), 
-    duration: int = Form(5),           
-    quality: str = Form("ultra"),      
+    style: str = Form("gentle_smile"), # Options: gentle_smile, blink, nod, listen
+    duration: int = Form(5),           # Duration in seconds
+    quality: str = Form("ultra"),      # Defaulting to ULTRA for funerals/tributes
 ):
+    """
+    Animate a portrait with cinematic quality settings.
+    """
     if not photo.filename:
         raise HTTPException(status_code=400, detail="Photo file must have a filename.")
 
     logger.info(f"Received request for: {photo.filename} | Style: {style}")
 
+    # 1) Secure Temp Storage
     tmp_dir = Path(tempfile.mkdtemp(prefix="stillhere_processing_"))
     photo_path = tmp_dir / photo.filename
 
     try:
+        # Save uploaded photo
         contents = await photo.read()
         if not contents:
             raise HTTPException(status_code=400, detail="Uploaded photo is empty.")
@@ -62,9 +72,11 @@ async def animate_endpoint(
         with photo_path.open("wb") as f:
             f.write(contents)
 
+        # 2) Load into Memory Keeper
         img = keeper.load_photo(str(photo_path))
 
-        # Execute Animation Pipeline with ULTRA quality
+        # 3) Execute Animation Pipeline
+        # We pass 'ultra' quality to ensure the model uses max inference steps
         video = animator.animate(
             photo=img,
             style=style,
@@ -72,12 +84,14 @@ async def animate_endpoint(
             quality=quality, 
         )
 
+        # 4) Save Output
         output_path = tmp_dir / f"{photo.filename}_animated.mp4"
         keeper.save_memory(video, str(output_path))
 
         if not output_path.exists():
             raise HTTPException(status_code=500, detail="Rendering failed.")
 
+        # 5) Serve Video
         with output_path.open("rb") as f:
             video_bytes = f.read()
 
@@ -90,4 +104,5 @@ async def animate_endpoint(
 
 if __name__ == "__main__":
     import uvicorn
+    # Running on port 8282 to avoid conflict with Brockston (5055) or WebUI (6161)
     uvicorn.run("api_server:app", host="0.0.0.0", port=8282, reload=True)

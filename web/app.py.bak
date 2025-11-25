@@ -1,0 +1,152 @@
+"""
+StillHere Web Application
+stillhere.world - Keep Your Loved Ones Close
+
+Built with love by The Christman AI Project
+Carbon & Silicon in Unity
+"""
+
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from pathlib import Path
+import os
+
+app = Flask(__name__)
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'change-this-in-production')
+
+# Pricing tiers
+PRICING_TIERS = {
+    'free': {
+        'name': 'Free',
+        'price': 0,
+        'price_display': 'Free',
+        'description': 'Try it - see your loved one move',
+        'features': [
+            '1 photo upload',
+            'Basic slideshow (5-10 seconds)',
+            '3 music tracks',
+            '720p export',
+            'StillHere watermark'
+        ],
+        'cta': 'Start Free'
+    },
+    'memory': {
+        'name': 'Memory',
+        'price': 9.99,
+        'price_display': '$9.99',
+        'description': 'Beautiful memorial video to share',
+        'features': [
+            'Up to 10 photos',
+            'Gentle animations (breathing, smile)',
+            'Full music library (20+ tracks)',
+            '1080p HD export',
+            'No watermark',
+            'Download & share'
+        ],
+        'cta': 'Create Memory',
+        'stripe_price_id': 'price_memory'
+    },
+    'living': {
+        'name': 'Living Memory',
+        'price': 29.99,
+        'price_display': '$29.99',
+        'description': 'Hear them speak again',
+        'features': [
+            'Everything in Memory tier',
+            'Up to 30 photos',
+            'Voice synthesis - hear them speak',
+            'Advanced animations (head turns, realistic movement)',
+            'Photo restoration (fix old photos)',
+            'Multiple video exports'
+        ],
+        'cta': 'Bring Them Back',
+        'stripe_price_id': 'price_living'
+    },
+    'eternal': {
+        'name': 'Eternal Companion',
+        'price': 199.00,
+        'price_display': '$199/month',
+        'description': 'Talk to them anytime, forever',
+        'features': [
+            'Everything in Living Memory tier',
+            'Fully conversational AI avatar',
+            'Voice cloned to sound exactly like them',
+            'Trained on their personality & stories',
+            'Remembers all conversations',
+            'Available 24/7 via web/app',
+            'Video calls with animated avatar',
+            'New memorial videos monthly',
+            'Priority support',
+            'Family plan (up to 5 people)'
+        ],
+        'cta': 'Keep Them Forever',
+        'stripe_price_id': 'price_eternal',
+        'is_subscription': True
+    }
+}
+
+
+@app.route('/')
+def index():
+    """Landing page with pricing tiers"""
+    return render_template('index.html', tiers=PRICING_TIERS)
+
+
+@app.route('/create/<tier>')
+def create(tier):
+    """Create memorial page for selected tier"""
+    if tier not in PRICING_TIERS:
+        return redirect(url_for('index'))
+    
+    return render_template('create.html', tier=tier, tier_info=PRICING_TIERS[tier])
+
+
+@app.route('/api/upload', methods=['POST'])
+def upload():
+    """Handle photo/video uploads"""
+    # TODO: Implement file upload handling
+    return jsonify({'status': 'success', 'message': 'Upload endpoint ready'})
+
+
+@app.route('/api/create-memorial', methods=['POST'])
+def create_memorial():
+    """Create memorial video"""
+    # TODO: Implement memorial creation with StillHere core
+    return jsonify({'status': 'success', 'message': 'Memorial creation endpoint ready'})
+
+
+@app.route('/api/checkout/<tier>', methods=['POST'])
+def checkout(tier):
+    """Handle Stripe checkout"""
+    if tier not in PRICING_TIERS:
+        return jsonify({'error': 'Invalid tier'}), 400
+    
+    # TODO: Implement Stripe checkout
+    return jsonify({
+        'status': 'success',
+        'message': 'Stripe integration coming soon',
+        'tier': tier,
+        'price': PRICING_TIERS[tier]['price']
+    })
+
+
+@app.route('/dashboard')
+def dashboard():
+    """User dashboard to manage memorials"""
+    return render_template('dashboard.html')
+
+
+@app.route('/about')
+def about():
+    """About StillHere and The Christman AI Project"""
+    return render_template('about.html')
+
+
+@app.route('/health')
+def health():
+    """Health check endpoint"""
+    return jsonify({'status': 'healthy', 'service': 'stillhere.world'})
+
+
+if __name__ == '__main__':
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)

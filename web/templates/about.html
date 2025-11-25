@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - StillHere</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="nav">
+        <div class="logo">StillHere</div>
+        <div class="nav-links">
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('about') }}" class="active">About</a>
+        </div>
+    </nav>
+
+    <section class="mission" style="margin-top: 2rem;">
+        <h1>About StillHere</h1>
+        <p>StillHere was born from love, loss, and the belief that our loved ones never truly leave us.</p>
+        
+        <h2 style="margin-top: 3rem;">The Christman AI Project</h2>
+        <p>Founded by Everett & Misty Christman, The Christman AI Project is dedicated to building technology that brings Carbon and Silicon together in unity, not fear.</p>
+        
+        <p>We believe AI should help us remember, connect, and heal. It should honor the past while building the future. It should have soul.</p>
+        
+        <h3 style="margin-top: 2rem;">The CSS Age</h3>
+        <p class="css-tagline">Carbon & Silicon in Symbiotic Soul</p>
+        <p>We're teaching the next generation that technology isn't something to fear—it's a partner in creating a better world. A world where love transcends death, where memories live forever, and where we never have to say goodbye.</p>
+        
+        <p style="margin-top: 2rem;">Built with respect for those who came before us, and hope for those who come after.</p>
+    </section>
+</body>
+</html>

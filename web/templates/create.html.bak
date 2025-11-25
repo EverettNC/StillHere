@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create {{ tier_info.name }} Memorial - StillHere</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/create.css') }}">
+</head>
+<body>
+    <nav class="nav">
+        <div class="logo">StillHere</div>
+        <div class="nav-links">
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="create-container">
+        <div class="create-header">
+            <h1>Create {{ tier_info.name }} Memorial</h1>
+            <p>{{ tier_info.description }}</p>
+            <div class="tier-badge">{{ tier_info.price_display }}</div>
+        </div>
+
+        <div class="create-workflow">
+            <!-- Step 1: Upload Photos -->
+            <div class="step-section active" id="step-upload">
+                <h2>Step 1: Upload Photos</h2>
+                <p class="step-description">Share photos of your loved one. We'll bring them to life.</p>
+                
+                <div class="upload-zone" id="upload-zone">
+                    <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p>Drag and drop photos here, or click to browse</p>
+                    <p class="upload-limit">Upload up to {{ tier_info.features[0].split()[2] if 'photos' in tier_info.features[0] else '1' }} photos</p>
+                    <input type="file" id="file-input" multiple accept="image/*" style="display: none;">
+                </div>
+
+                <div class="uploaded-photos" id="uploaded-photos">
+                    <!-- Photos will appear here -->
+                </div>
+
+                <button class="cta-button primary" id="next-to-details" disabled>Continue to Details</button>
+            </div>
+
+            <!-- Step 2: Details -->
+            <div class="step-section" id="step-details">
+                <h2>Step 2: Tell Us About Them</h2>
+                <p class="step-description">Help us honor their memory</p>
+                
+                <form class="details-form" id="details-form">
+                    <div class="form-group">
+                        <label>Their Name</label>
+                        <input type="text" name="name" placeholder="Full name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Birth Date</label>
+                        <input type="date" name="birth_date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Date of Passing (if applicable)</label>
+                        <input type="date" name="passing_date">
+                    </div>
+
+                    {% if tier in ['living', 'eternal'] %}
+                    <div class="form-group">
+                        <label>Their Voice (Optional)</label>
+                        <p class="field-help">Upload a voice recording to clone their voice</p>
+                        <input type="file" name="voice_sample" accept="audio/*">
+                    </div>
+
+                    <div class="form-group">
+                        <label>What would you like them to say?</label>
+                        <textarea name="speech_text" rows="4" placeholder="I love you. I'm proud of you. Keep going..."></textarea>
+                    </div>
+                    {% endif %}
+
+                    {% if tier == 'eternal' %}
+                    <div class="form-group">
+                        <label>Their Personality</label>
+                        <textarea name="personality" rows="6" placeholder="Describe their personality, values, favorite sayings, how they talked, their sense of humor..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Favorite Stories</label>
+                        <textarea name="stories" rows="6" placeholder="Share stories they loved to tell, important life events, family traditions..."></textarea>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label>Music Selection</label>
+                        <select name="music">
+                            <option value="gentle_piano">Gentle Piano</option>
+                            <option value="strings">Strings & Emotion</option>
+                            <option value="hymn">Traditional Hymn</option>
+                            <option value="nature">Nature Sounds</option>
+                            <option value="custom">Upload Custom Music</option>
+                        </select>
+                    </div>
+
+                    <button type="button" class="cta-button secondary" id="back-to-upload">← Back</button>
+                    <button type="button" class="cta-button primary" id="next-to-preview">Preview Memorial</button>
+                </form>
+            </div>
+
+            <!-- Step 3: Preview & Checkout -->
+            <div class="step-section" id="step-preview">
+                <h2>Step 3: Preview & Complete</h2>
+                <p class="step-description">Review your memorial before completing</p>
+                
+                <div class="preview-container">
+                    <div class="preview-video" id="preview-video">
+                        <p>Processing preview...</p>
+                    </div>
+
+                    <div class="memorial-summary">
+                        <h3>Memorial Details</h3>
+                        <div id="summary-content">
+                            <!-- Will be populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout-section">
+                    <div class="price-summary">
+                        <h3>{{ tier_info.name }} Memorial</h3>
+                        <div class="price-line">
+                            <span>Total:</span>
+                            <span class="price">{{ tier_info.price_display }}</span>
+                        </div>
+                    </div>
+
+                    {% if tier == 'free' %}
+                    <button class="cta-button primary" id="create-free">Create Free Memorial</button>
+                    {% else %}
+                    <button class="cta-button primary" id="checkout-button">Complete Purchase</button>
+                    {% endif %}
+                </div>
+
+                <button type="button" class="cta-button secondary" id="back-to-details">← Back</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/create.js') }}"></script>
+</body>
+</html>

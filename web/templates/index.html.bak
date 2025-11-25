@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StillHere - Keep Your Loved Ones Close</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Hero Section -->
+    <header class="hero">
+        <nav class="nav">
+            <div class="logo">StillHere</div>
+            <div class="nav-links">
+                <a href="#pricing">Pricing</a>
+                <a href="{{ url_for('about') }}">About</a>
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            </div>
+        </nav>
+        
+        <div class="hero-content">
+            <h1>They're Still Here</h1>
+            <p class="tagline">Keep your loved ones close. Forever.</p>
+            <p class="subtitle">Create beautiful, animated memorials. Hear their voice. Talk to them anytime.</p>
+            <a href="#pricing" class="cta-button primary">Start Free</a>
+        </div>
+    </header>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <h2>How It Works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Upload Photos</h3>
+                <p>Share your favorite photos of your loved one</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Choose Your Tier</h3>
+                <p>From simple slideshows to interactive AI companions</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Keep Them Close</h3>
+                <p>Watch them move, hear them speak, or talk with them forever</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <h2>Choose Your Memorial</h2>
+        <p class="pricing-subtitle">From simple memories to eternal companionship</p>
+        
+        <div class="pricing-grid">
+            {% for tier_id, tier in tiers.items() %}
+            <div class="pricing-card {% if tier_id == 'eternal' %}featured{% endif %}">
+                {% if tier_id == 'eternal' %}
+                <div class="badge">Most Meaningful</div>
+                {% endif %}
+                
+                <h3>{{ tier.name }}</h3>
+                <div class="price">{{ tier.price_display }}</div>
+                <p class="tier-description">{{ tier.description }}</p>
+                
+                <ul class="features">
+                    {% for feature in tier.features %}
+                    <li>✓ {{ feature }}</li>
+                    {% endfor %}
+                </ul>
+                
+                <a href="{{ url_for('create', tier=tier_id) }}" class="cta-button {% if tier_id == 'eternal' %}primary{% else %}secondary{% endif %}">
+                    {{ tier.cta }}
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials">
+        <h2>Stories of Love</h2>
+        <div class="testimonial-grid">
+            <div class="testimonial">
+                <p class="quote">"I can hear my grandmother's voice again. It's like she never left."</p>
+                <p class="author">— Sarah M.</p>
+            </div>
+            <div class="testimonial">
+                <p class="quote">"My kids talk to their grandpa every night. It's healing for all of us."</p>
+                <p class="author">— Michael R.</p>
+            </div>
+            <div class="testimonial">
+                <p class="quote">"The most beautiful gift I've ever given my mother - seeing her husband move and smile again."</p>
+                <p class="author">— Jennifer K.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mission -->
+    <section class="mission">
+        <h2>Built With Love</h2>
+        <p>StillHere was created by The Christman AI Project - a mission to bring Carbon and Silicon together in unity, not fear.</p>
+        <p>We believe technology should help us remember, connect, and heal. Your loved ones deserve to be remembered. You deserve to keep them close.</p>
+        <p class="css-tagline">Carbon & Silicon in Symbiotic Soul</p>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>StillHere</h4>
+                <p>Keep your loved ones close. Forever.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Product</h4>
+                <a href="#pricing">Pricing</a>
+                <a href="{{ url_for('about') }}">About</a>
+                <a href="/docs">Documentation</a>
+            </div>
+            <div class="footer-section">
+                <h4>Support</h4>
+                <a href="/contact">Contact</a>
+                <a href="/privacy">Privacy</a>
+                <a href="/terms">Terms</a>
+            </div>
+            <div class="footer-section">
+                <h4>The Christman AI Project</h4>
+                <p>Teaching the CSS Age</p>
+                <p>Everett & Misty Christman</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 StillHere. Built with love and respect for those who deserve to be remembered.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

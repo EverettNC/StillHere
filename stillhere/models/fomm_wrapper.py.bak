@@ -17,6 +17,7 @@ from PIL import Image
 
 class FOMMModel:
 
+MModel:
     """
     First Order Motion Model wrapper.
 

@@ -10,7 +10,7 @@ This is by design. Privacy through security.
 Shared encryption infrastructure with Eruptor.
 """
 
-from typing import Union, Optional
+from typing import Union
 import hashlib
 import os
 from pathlib import Path
